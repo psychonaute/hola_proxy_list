@@ -87,7 +87,7 @@ For more options see Synopsis below.
 
 ## Using with middlewares
 
-If your client doesn't support proxy authorization or doesn't support HTTPS proxies, you may need to use some middleware like haproxy which connects to TLS and injects `Proxy-Authorization` header. In this case it might be useful to have `Proxy-Authorization` header exported along with other proxy data in list. `hola-proxy-list` can do it for you:
+If your client doesn't support proxy authorization or doesn't support HTTPS proxies, you may need to use some middleware like haproxy which is capable to TLS proxy upstream and inject `Proxy-Authorization` header. In this case it might be useful to have `Proxy-Authorization` header exported along with other proxy data in list. `hola-proxy-list` can do it for you:
 
 ```
 $ ./hola-proxy-list.py -c se -A
