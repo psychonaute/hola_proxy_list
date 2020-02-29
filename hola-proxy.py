@@ -187,7 +187,7 @@ def main():
         tunnels = zgettunnels(user_uuid, session_key,
                               country=args.country, limit=args.limit)
         logger.debug("Retrieved tunnels data: %s", tunnels)
-        output_csv(tunnels, user_uuid)
+        output_csv(tunnels, user_uuid, args.auth_header)
     except KeyboardInterrupt:
         pass
     except Exception as exc:
