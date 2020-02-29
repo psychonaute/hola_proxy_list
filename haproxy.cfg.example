@@ -21,4 +21,4 @@ frontend http-proxy
     default_backend proxy-be
 
 backend proxy-be
-    server proxy zagent404.hola.org:22222 ssl sni str(zagent404.hola.org) verify required ca-file /etc/ssl/certs/ca-bundle.crt
+    server proxy zagent404.hola.org:22222 ssl sni str(zagent404.hola.org) verify required verifyhost zagent404.hola.org ca-file /etc/ssl/certs/ca-bundle.crt
