@@ -103,6 +103,8 @@ zagent1982.hola.org,46.246.93.155,22222,direct,edis,user-uuid-b0ada121f249452598
 zagent1982.hola.org,46.246.93.155,22223,peer,edis,user-uuid-b0ada121f24945259857731a661324ab,da36c03f59e8,Proxy-Authorization: basic dXNlci11dWlkLWIwYWRhMTIxZjI0OTQ1MjU5ODU3NzMxYTY2MTMyNGFiOmRhMzZjMDNmNTllOA==
 ```
 
+See [haproxy.cfg.example](https://github.com/Snawoot/hola-proxy-list/blob/master/haproxy.cfg.example) for example of haproxy config which enables plain HTTP proxy on local port 8080, injects proxy authorization and forwards connections via TLS to Hola proxy server. It's trivial to regenerate such config and reload haproxy in order to keep proxies and credentials always updated.
+
 ## Synopsis
 
 ```
