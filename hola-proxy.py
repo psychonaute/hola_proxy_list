@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import sys
 import argparse
 import enum
 import logging
@@ -9,13 +10,16 @@ import urllib.parse
 import codecs
 import json
 import random
-import pprint
+import base64
+import csv
 
 USER_AGENT = "Mozilla/5.0 (X11; Fedora; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36"
 EXT_VER = "1.164.641"
 EXT_BROWSER = "chrome"
 PRODUCT = "cws"
 CCGI_URL = "https://client.hola.org/client_cgi/"
+PORT_TYPE_WHITELIST = {"direct", "peer"}
+PROTOCOL_WHITELIST = {"http", "HTTP"}
 
 def setup_logger(name, verbosity):
     logger = logging.getLogger(name)
@@ -119,6 +123,9 @@ def parse_args():
     parser.add_argument("-l", "--list-countries",
                         action="store_true",
                         help="list available countries")
+    parser.add_argument("-A", "--auth-header",
+                        action="store_true",
+                        help="produce auth header for each line in output")
     parser.add_argument("-c", "--country",
                         default="us",
                         help="desired proxy location")
@@ -132,6 +139,35 @@ def parse_args():
                         choices=LogLevel,
                         default=LogLevel.info)
     return parser.parse_args()
+
+def output_csv(tunnels, user_uuid, auth_header=False):
+    login = "user-uuid-" + user_uuid
+    password = tunnels["agent_key"]
+    fields = ["Host", "IP address", "Port", "Port type", "Vendor", "Login", "Password"]
+    if auth_header:
+        auth_header = "Proxy-Authorization: basic %s" % base64.b64encode(
+            (login + ":" + password).encode('ascii')).decode('ascii')
+        fields.append("Auth header")
+    host_pairs = [(host, ip) for host, ip in tunnels["ip_list"].items()
+                  if tunnels["protocol"][host] in PROTOCOL_WHITELIST]
+    port_pairs = [(t, p) for t, p in tunnels["port"].items()
+                  if t in PORT_TYPE_WHITELIST]
+    writer = csv.DictWriter(sys.stdout, fieldnames=fields)
+    writer.writeheader()
+    for host, ip in host_pairs:
+        for port_type, port in port_pairs:
+            row = {
+                "Host": host,
+                "IP address": ip,
+                "Port": port,
+                "Port type": port_type,
+                "Vendor": tunnels["vendor"][host],
+                "Login": login,
+                "Password": password,
+            }
+            if auth_header:
+                row["Auth header"] = auth_header
+            writer.writerow(row)
 
 def main():
     args = parse_args()
@@ -151,6 +187,7 @@ def main():
         tunnels = zgettunnels(user_uuid, session_key,
                               country=args.country, limit=args.limit)
         logger.debug("Retrieved tunnels data: %s", tunnels)
+        output_csv(tunnels, user_uuid)
     except KeyboardInterrupt:
         pass
     except Exception as exc:
