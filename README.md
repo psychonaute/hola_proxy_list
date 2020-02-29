@@ -3,7 +3,9 @@ hola-proxy-list
 
 Fetches free proxy list via Hola browser extension API. Resulting list contains proxies which forward traffic directly from server (`direct` type) and via peers with residental IP addresses in specified country (`peer` type). Proxies support both HTTP and HTTPS protocols (i.e. HTTP proxy via TLS channel between client and proxy server).
 
-Note: proxy auth credentials have some expiration time, so you have to update it from time to time. Once proxy was accessed with proper credentials, it will whitelist your IP address for a while and will not require authentication for further requests.
+Once proxy was accessed with proper credentials, it will whitelist your IP address for a while and will not require authentication for further requests. However, it might be more convenient to enable authorization for all requests unconditionally.
+
+Note: proxy auth credentials have some expiration time, so you'll have to update it from time to time.
 
 ## Requirements
 
