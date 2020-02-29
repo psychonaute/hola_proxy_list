@@ -88,6 +88,13 @@ def zgettunnels(user_uuid, session_key, country="us", *, limit=3, is_premium=0):
     resp = fetch_url(CCGI_URL + "zgettunnels?" + qs)
     return json.loads(resp)
 
+def vpn_countries():
+    qs = encode_params({
+        "browser": EXT_BROWSER,
+    })
+    resp = fetch_url(CCGI_URL + "vpn_countries.json?" + qs)
+    return json.loads(resp)
+
 def parse_args():
     def check_loglevel(arg):
         try:
@@ -131,6 +138,11 @@ def main():
     logger = setup_logger("MAIN", args.verbosity)
     setup_logger("FETCH", args.verbosity)
     try:
+        if args.list_countries:
+            for cc in vpn_countries():
+                print(cc)
+            return
+
         user_uuid = uuid.uuid4().hex
         logger.info("Generated user UUID: %s", user_uuid)
         logger.info("Retrieving session key...")
@@ -143,7 +155,6 @@ def main():
         pass
     except Exception as exc:
         logger.exception("Got exception: %s", str(exc))
-
 
 if __name__ == "__main__":
     main()
