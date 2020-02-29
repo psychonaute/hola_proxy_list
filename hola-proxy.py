@@ -42,8 +42,8 @@ class LogLevel(enum.IntEnum):
 
 def fetch_url(url, *, data=None, method=None, timeout=10):
     logger = logging.getLogger("FETCH")
-    logger.info("Fetching URL %s with method %s, post data=%s",
-                url, method, repr(data))
+    logger.debug("Fetching URL %s with method %s, post data=%s",
+                 url, method, repr(data))
     http_req = urllib.request.Request(
         url,
         data=data,
@@ -129,10 +129,20 @@ def parse_args():
 def main():
     args = parse_args()
     logger = setup_logger("MAIN", args.verbosity)
-    user_uuid = uuid.uuid4().hex
-    session_key = background_init(user_uuid)["key"]
-    pprint.pprint(zgettunnels(user_uuid, session_key,
-                              country=args.country, limit=args.limit))
+    setup_logger("FETCH", args.verbosity)
+    try:
+        user_uuid = uuid.uuid4().hex
+        logger.info("Generated user UUID: %s", user_uuid)
+        logger.info("Retrieving session key...")
+        session_key = background_init(user_uuid)["key"]
+        logger.info("Session key = %s", repr(session_key))
+        tunnels = zgettunnels(user_uuid, session_key,
+                              country=args.country, limit=args.limit)
+        logger.debug("Retrieved tunnels data: %s", tunnels)
+    except KeyboardInterrupt:
+        pass
+    except Exception as exc:
+        logger.exception("Got exception: %s", str(exc))
 
 
 if __name__ == "__main__":
