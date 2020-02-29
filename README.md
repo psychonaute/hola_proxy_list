@@ -5,6 +5,8 @@ Fetches free proxy list via Hola browser extension API. Resulting list contains 
 
 Once proxy was accessed with proper credentials, it will whitelist your IP address for a while and will not require authentication for further requests. However, it might be more convenient to enable authorization for all requests unconditionally.
 
+hola-proxy-list outputs resulting list in CSV format into stdout and logs get written to stderr. Those two outputs don't interfere with each other and you may use output of application right away as machine-readable input for other programs.
+
 Note: proxy auth credentials have some expiration time, so you'll have to update it from time to time.
 
 ## Requirements
