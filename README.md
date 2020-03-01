@@ -109,20 +109,26 @@ See [haproxy.cfg.example](https://github.com/Snawoot/hola-proxy-list/blob/master
 
 ```
 $ ./hola-proxy-list.py --help
-usage: hola-proxy-list.py [-h] [-l] [-A] [-c COUNTRY] [-n LIMIT]
-                          [-v {debug,info,warn,error,fatal}]
+usage: hola-proxy-list.py [-h] [-v {debug,info,warn,error,fatal}] [-l]
+                          [-c COUNTRY] [-n LIMIT] [-t TIMEOUT] [-A]
 
 Fetches free proxy list via Hola browser extension API
 
 optional arguments:
   -h, --help            show this help message and exit
+  -v {debug,info,warn,error,fatal}, --verbosity {debug,info,warn,error,fatal}
+                        logging verbosity (default: info)
+
+request options:
   -l, --list-countries  list available countries (default: False)
-  -A, --auth-header     produce auth header for each line in output (default:
-                        False)
   -c COUNTRY, --country COUNTRY
                         desired proxy location (default: us)
   -n LIMIT, --limit LIMIT
                         amount of proxies in retrieved list (default: 3)
-  -v {debug,info,warn,error,fatal}, --verbosity {debug,info,warn,error,fatal}
-                        logging verbosity (default: info)
+  -t TIMEOUT, --timeout TIMEOUT
+                        timeout for network operations (default: 10.0)
+
+output options:
+  -A, --auth-header     produce auth header for each line in output (default:
+                        False)
 ```
