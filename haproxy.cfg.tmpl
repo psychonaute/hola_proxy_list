@@ -1,5 +1,6 @@
 global
     maxconn 1000
+    max-spread-checks 10000
 
 defaults
     mode    http
@@ -7,18 +8,22 @@ defaults
     timeout client  600000
     timeout server  600000
     timeout tunnel  0
+    timeout check   5000
 
 frontend http-proxy
     bind 127.0.0.1:8080
     mode http
-    # These three lines is a fix for torrent
+    # These five lines is a fix for torrent
     acl local_retracker url -i -m beg http://retracker.local/
     acl bt_announce urlp(info_hash) -m found
     acl port0 urlp(port) 0
     http-request reject if local_retracker
     http-request set-query %[query,regsub(^port=0,port=1),regsub(&port=0,&port=1)] if bt_announce port0
-    http-request add-header Proxy-Authorization "basic dXNlci11dWlkLWIwYWRhMTIxZjI0OTQ1MjU5ODU3NzMxYTY2MTMyNGFiOmRhMzZjMDNmNTllOA=="
+    http-request add-header Proxy-Authorization "$auth_header"
     default_backend proxy-be
 
 backend proxy-be
-    server proxy zagent404.hola.org:22222 ssl sni str(zagent404.hola.org) verify required verifyhost zagent404.hola.org ca-file /etc/ssl/certs/ca-bundle.crt
+    balance first
+    default-server inter 60s fall 2 rise 3
+    option httpchk CONNECT www.google.com:443 "HTTP/1.1\r\nProxy-Authorization: $auth_header"
+    server proxy$counter $host:$direct_port ssl sni str($host) verify required verifyhost $host ca-file /etc/ssl/certs/ca-bundle.crt check

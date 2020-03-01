@@ -12,6 +12,8 @@ import json
 import random
 import base64
 import csv
+import string
+import os.path
 
 USER_AGENT = "Mozilla/5.0 (X11; Fedora; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36"
 EXT_VER = "1.164.641"
@@ -292,6 +294,14 @@ class LogLevel(enum.IntEnum):
     def __str__(self):
         return self.name
 
+class Output(enum.Enum):
+    csv = 1
+    json = 2
+    haproxy = 3
+
+    def __str__(self):
+        return self.name
+
 def fetch_url(url, *, data=None, method=None, timeout=10):
     logger = logging.getLogger("FETCH")
     logger.debug("Fetching URL %s with method %s, post data=%s",
@@ -356,6 +366,13 @@ def parse_args():
         except (IndexError, KeyError):
             raise argparse.ArgumentTypeError("%s is not valid loglevel" % (repr(arg),))
 
+    def check_output(arg):
+        try:
+            return Output[arg]
+        except (IndexError, KeyError):
+            raise argparse.ArgumentTypeError("%s is not valid output format" %
+                                             (repr(arg),))
+
     def check_positive_int(arg):
         def fail():
             raise argparse.ArgumentTypeError("%s is not valid positive integer" % (repr(arg),))
@@ -402,9 +419,21 @@ def parse_args():
                            type=check_positive_float,
                            help="timeout for network operations")
     output_group = parser.add_argument_group("output options")
+    output_group.add_argument("-O", "--output-format",
+                              help="output format",
+                              type=check_output,
+                              choices=Output,
+                              default=Output.csv)
     output_group.add_argument("-A", "--auth-header",
                               action="store_true",
-                              help="produce auth header for each line in output")
+                              help="(CSV format only) produce auth header "
+                              "for each line in output")
+    def_tmpl_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                 "haproxy.cfg.tmpl")
+    output_group.add_argument("-T", "--template",
+                              help="(haproxy format only) haproxy config "
+                              "template file",
+                              default=def_tmpl_path)
     return parser.parse_args()
 
 def output_csv(tunnels, user_uuid, auth_header=False):
@@ -436,6 +465,43 @@ def output_csv(tunnels, user_uuid, auth_header=False):
                 row["Auth header"] = auth_header
             writer.writerow(row)
 
+def output_json(tunnels, user_uuid):
+    out_data = dict(tunnels)
+    out_data["uuid"] = user_uuid
+    json.dump(out_data, sys.stdout, indent=4, sort_keys=True)
+
+def output_haproxy(tunnels, user_uuid, tmpl_path):
+    login = "user-uuid-" + user_uuid
+    password = tunnels["agent_key"]
+    auth_header = "basic %s" % base64.b64encode(
+        (login + ":" + password).encode('ascii')).decode('ascii')
+    first_host = next(iter(tunnels["ip_list"]))
+    first_ip = tunnels["ip_list"][first_host]
+    base_vars = {
+        "first_host": first_host,
+        "first_ip": first_ip,
+        "auth_header": auth_header,
+    }
+    for port_type in PORT_TYPE_WHITELIST:
+        if port_type in tunnels["port"]:
+            base_vars[port_type + "_port"] = tunnels["port"][port_type]
+
+    with open(tmpl_path) as tmpl_file:
+        for line in tmpl_file:
+            t = string.Template(line)
+            try:
+                sys.stdout.write(t.substitute(base_vars))
+            except KeyError:
+                try:
+                    for counter, (host, ip) in enumerate(tunnels["ip_list"].items()):
+                        sys.stdout.write(t.substitute(base_vars,
+                                                      host=host,
+                                                      ip=ip,
+                                                      counter=counter))
+                except KeyError as exc:
+                    raise RuntimeError("Template variable %s is undefined" %
+                                       (repr(exc.args[0]),))
+
 def main():
     args = parse_args()
     logger = setup_logger("MAIN", args.verbosity)
@@ -455,7 +521,14 @@ def main():
                               country=args.country, limit=args.limit,
                               timeout=args.timeout)
         logger.debug("Retrieved tunnels data: %s", tunnels)
-        output_csv(tunnels, user_uuid, args.auth_header)
+        if args.output_format is Output.csv:
+            output_csv(tunnels, user_uuid, args.auth_header)
+        elif args.output_format is Output.json:
+            output_json(tunnels, user_uuid)
+        elif args.output_format is Output.haproxy:
+            output_haproxy(tunnels, user_uuid, args.template)
+        else:
+            raise RuntimeError("Unsupported output format")
     except KeyboardInterrupt:
         pass
     except Exception as exc:
