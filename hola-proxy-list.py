@@ -313,7 +313,7 @@ def fetch_url(url, *, data=None, method=None, timeout=10):
 def encode_params(params, encoding=None):
     return urllib.parse.urlencode(params, encoding=encoding)
 
-def background_init(user_uuid):
+def background_init(user_uuid, *, timeout=10.0):
     post_data = encode_params({
         "login": "1",
         "ver": EXT_VER,
@@ -322,10 +322,12 @@ def background_init(user_uuid):
         "uuid": user_uuid,
     })
     resp = fetch_url(CCGI_URL + "background_init?" + query_string,
-                     data=post_data)
+                     data=post_data,
+                     timeout=timeout)
     return json.loads(resp)
 
-def zgettunnels(user_uuid, session_key, country="us", *, limit=3, is_premium=0):
+def zgettunnels(user_uuid, session_key, country="us", *, limit=3, is_premium=0,
+                timeout=10.0):
     qs = encode_params({
         "country": country,
         "limit": limit,
@@ -337,14 +339,14 @@ def zgettunnels(user_uuid, session_key, country="us", *, limit=3, is_premium=0):
         "session_key": session_key,
         "is_premium": is_premium,
     })
-    resp = fetch_url(CCGI_URL + "zgettunnels?" + qs)
+    resp = fetch_url(CCGI_URL + "zgettunnels?" + qs, timeout=timeout)
     return json.loads(resp)
 
-def vpn_countries():
+def vpn_countries(*, timeout=10.0):
     qs = encode_params({
         "browser": EXT_BROWSER,
     })
-    resp = fetch_url(CCGI_URL + "vpn_countries.json?" + qs)
+    resp = fetch_url(CCGI_URL + "vpn_countries.json?" + qs, timeout=timeout)
     return json.loads(resp)
 
 def parse_args():
@@ -365,27 +367,44 @@ def parse_args():
             fail()
         return ivalue
 
+    def check_positive_float(arg):
+        def fail():
+            raise argparse.ArgumentTypeError("%s is not valid positive float" % (repr(arg),))
+        try:
+            fvalue = float(arg)
+        except ValueError:
+            fail()
+        if fvalue <= 0:
+            fail()
+        return fvalue
+
     parser = argparse.ArgumentParser(
         description="Fetches free proxy list via Hola browser extension API",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("-l", "--list-countries",
-                        action="store_true",
-                        help="list available countries")
-    parser.add_argument("-A", "--auth-header",
-                        action="store_true",
-                        help="produce auth header for each line in output")
-    parser.add_argument("-c", "--country",
-                        default="us",
-                        help="desired proxy location")
-    parser.add_argument("-n", "--limit",
-                        default=3,
-                        type=check_positive_int,
-                        help="amount of proxies in retrieved list")
     parser.add_argument("-v", "--verbosity",
                         help="logging verbosity",
                         type=check_loglevel,
                         choices=LogLevel,
                         default=LogLevel.info)
+    req_group = parser.add_argument_group("request options")
+    req_group.add_argument("-l", "--list-countries",
+                           action="store_true",
+                           help="list available countries")
+    req_group.add_argument("-c", "--country",
+                           default="us",
+                           help="desired proxy location")
+    req_group.add_argument("-n", "--limit",
+                           default=3,
+                           type=check_positive_int,
+                           help="amount of proxies in retrieved list")
+    req_group.add_argument("-t", "--timeout",
+                           default=10.0,
+                           type=check_positive_float,
+                           help="timeout for network operations")
+    output_group = parser.add_argument_group("output options")
+    output_group.add_argument("-A", "--auth-header",
+                              action="store_true",
+                              help="produce auth header for each line in output")
     return parser.parse_args()
 
 def output_csv(tunnels, user_uuid, auth_header=False):
@@ -423,17 +442,18 @@ def main():
     setup_logger("FETCH", args.verbosity)
     try:
         if args.list_countries:
-            for cc in vpn_countries():
+            for cc in vpn_countries(timeout=args.timeout):
                 print("%s - %s" % (cc, ISO3166.get(cc.upper(), "???")))
             return
 
         user_uuid = uuid.uuid4().hex
         logger.info("Generated user UUID: %s", user_uuid)
         logger.info("Retrieving session key...")
-        session_key = background_init(user_uuid)["key"]
+        session_key = background_init(user_uuid, timeout=args.timeout)["key"]
         logger.info("Session key = %s", repr(session_key))
         tunnels = zgettunnels(user_uuid, session_key,
-                              country=args.country, limit=args.limit)
+                              country=args.country, limit=args.limit,
+                              timeout=args.timeout)
         logger.debug("Retrieved tunnels data: %s", tunnels)
         output_csv(tunnels, user_uuid, args.auth_header)
     except KeyboardInterrupt:
