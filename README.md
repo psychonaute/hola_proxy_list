@@ -1,6 +1,12 @@
 hola-proxy-list
 ===============
 
+---
+
+This project is superseeded by [hola-proxy](https://github.com/Snawoot/hola-proxy)
+
+---
+
 Fetches free proxy list via Hola browser extension API. Resulting list contains proxies which forward traffic directly from server (`direct` type) and via peers with residental IP addresses in specified country (`peer` type). Proxies support both HTTP and HTTPS protocols (i.e. HTTP proxy via TLS channel between client and proxy server).
 
 Once proxy was accessed with proper credentials, it will whitelist your IP address for a while and will not require authentication for further requests. However, it might be more convenient to enable authorization for all requests unconditionally.
