@@ -334,6 +334,7 @@ def background_init(user_uuid, *, timeout=10.0):
     resp = fetch_url(CCGI_URL + "background_init?" + query_string,
                      data=post_data,
                      timeout=timeout)
+    print(resp)
     return json.loads(resp)
 
 def zgettunnels(user_uuid, session_key, country="us", *, limit=3, is_premium=0,
