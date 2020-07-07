@@ -117,6 +117,27 @@ hola-proxy-list utility has special support for haproxy and capable to output ha
 
 Default output format. All examples above illustrate it.
 
+### URI output
+This format outputs URI. easy to use in bash scripts..
+
+```
+$ curl -x $(./hola-proxy-list.py  -O uri -n 1) 'https://httpbin.org/get'
+2020-07-07 22:12:41 INFO     MAIN: Generated user UUID: f0211175927740b4bd2a7fe2d57b1fa2
+2020-07-07 22:12:41 INFO     MAIN: Retrieving session key...
+2020-07-07 22:12:41 INFO     MAIN: Session key = 3293743567
+{
+  "args": {},
+  "headers": {
+    "Accept": "*/*",
+    "Host": "httpbin.org",
+    "User-Agent": "curl/7.58.0",
+    "X-Amzn-Trace-Id": "Root=1-5f04d73b-4e0af4244e4c739adc2696dc"
+  },
+  "origin": "192.241.230.96",
+  "url": "https://httpbin.org/get"
+}
+```
+
 ### JSON output
 
 This format outputs JSON which has structure almost identical to API response. Example:
