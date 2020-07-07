@@ -429,6 +429,13 @@ def parse_args():
                               action="store_true",
                               help="(CSV format only) produce auth header "
                               "for each line in output")
+    output_group.add_argument("--uri-tls",
+                              action="store_true",
+                              help="(URI format only) enable TLS support in URI")
+    output_group.add_argument("--uri-port-type",
+                              choices=PORT_TYPE_WHITELIST,
+                              default="direct",
+                              help="(URI format only) selector for port type")
     def_tmpl_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                  "haproxy.cfg.tmpl")
     output_group.add_argument("-T", "--template",
@@ -503,12 +510,17 @@ def output_haproxy(tunnels, user_uuid, tmpl_path):
                     raise RuntimeError("Template variable %s is undefined" %
                                        (repr(exc.args[0]),))
 
-def output_uri(tunnels, user_uuid, port='direct'):
+def output_uri(tunnels, user_uuid, port='direct', tls=False):
     assert (port in PORT_TYPE_WHITELIST)
     proxies = dict(tunnels)
     login = "user-uuid-" + user_uuid
+    protocol = "https" if tls else "http"
     for k, v in proxies['ip_list'].items():
-        print(f"{proxies['protocol'][k]}://user-uuid-{user_uuid}:{proxies['agent_key']}@{v}:{proxies['port'][port]}")
+        print("%s://%s:%s@%s:%d" % (protocol,
+                                    login,
+                                    proxies['agent_key'],
+                                    k if tls else v,
+                                    proxies['port'][port]))
 
 def main():
     args = parse_args()
@@ -534,7 +546,7 @@ def main():
         elif args.output_format is Output.json:
             output_json(tunnels, user_uuid)
         elif args.output_format is Output.uri:
-            output_uri(tunnels, user_uuid)
+            output_uri(tunnels, user_uuid, args.uri_port_type, args.uri_tls)
         elif args.output_format is Output.haproxy:
             output_haproxy(tunnels, user_uuid, args.template)
         else:
