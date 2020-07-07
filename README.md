@@ -255,7 +255,8 @@ python3 ~/src/hola-proxy-list/hola-proxy-list.py -v error -O haproxy -c us > /et
 $ ./hola-proxy-list.py --help
 usage: hola-proxy-list.py [-h] [-v {debug,info,warn,error,fatal}] [-l]
                           [-c COUNTRY] [-n LIMIT] [-t TIMEOUT]
-                          [-O {csv,json,haproxy}] [-A] [-T TEMPLATE]
+                          [-O {csv,json,haproxy,uri}] [-A] [--uri-tls]
+                          [--uri-port-type {direct,peer}] [-T TEMPLATE]
 
 Fetches free proxy list via Hola browser extension API
 
@@ -274,10 +275,15 @@ request options:
                         timeout for network operations (default: 10.0)
 
 output options:
-  -O {csv,json,haproxy}, --output-format {csv,json,haproxy}
+  -O {csv,json,haproxy,uri}, --output-format {csv,json,haproxy,uri}
                         output format (default: csv)
   -A, --auth-header     (CSV format only) produce auth header for each line in
                         output (default: False)
+  --uri-tls             (URI format only) enable TLS support in URI (default:
+                        False)
+  --uri-port-type {direct,peer}
+                        (URI format only) selector for port type (default:
+                        direct)
   -T TEMPLATE, --template TEMPLATE
                         (haproxy format only) haproxy config template file
                         (default: /home/user/src/hola-proxy-list/haproxy.cfg.tmpl)
