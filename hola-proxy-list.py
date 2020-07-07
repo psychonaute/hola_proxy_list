@@ -298,6 +298,7 @@ class Output(enum.Enum):
     csv = 1
     json = 2
     haproxy = 3
+    uri = 4
 
     def __str__(self):
         return self.name
@@ -502,6 +503,13 @@ def output_haproxy(tunnels, user_uuid, tmpl_path):
                     raise RuntimeError("Template variable %s is undefined" %
                                        (repr(exc.args[0]),))
 
+def output_uri(tunnels, user_uuid, port='direct'):
+    assert (port in PORT_TYPE_WHITELIST)
+    proxies = dict(tunnels)
+    login = "user-uuid-" + user_uuid
+    for k, v in proxies['ip_list'].items():
+        print(f"{proxies['protocol'][k]}://user-uuid-{user_uuid}:{proxies['agent_key']}@{v}:{proxies['port'][port]}")
+
 def main():
     args = parse_args()
     logger = setup_logger("MAIN", args.verbosity)
@@ -525,6 +533,8 @@ def main():
             output_csv(tunnels, user_uuid, args.auth_header)
         elif args.output_format is Output.json:
             output_json(tunnels, user_uuid)
+        elif args.output_format is Output.uri:
+            output_uri(tunnels, user_uuid)
         elif args.output_format is Output.haproxy:
             output_haproxy(tunnels, user_uuid, args.template)
         else:
