@@ -19,7 +19,7 @@ Note: proxy auth credentials have some expiration time, so you'll have to update
 
 :heart: :heart: :heart:
 
-You can say thanks to the author and support ongoing efforts with donations to these wallets:
+You can say thanks to the author by donations to these wallets:
 
 - ETH: `0xB71250010e8beC90C5f9ddF408251eBA9dD7320e`
 - BTC:
