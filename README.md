@@ -15,6 +15,19 @@ hola-proxy-list outputs resulting list in CSV format into stdout and logs get wr
 
 Note: proxy auth credentials have some expiration time, so you'll have to update it from time to time.
 
+---
+
+:heart: :heart: :heart:
+
+You can say thanks to the author and support ongoing efforts with donations to these wallets:
+
+- ETH: `0xB71250010e8beC90C5f9ddF408251eBA9dD7320e`
+- BTC:
+  - Legacy: `1N89PRvG1CSsUk9sxKwBwudN6TjTPQ1N8a`
+  - Segwit: `bc1qc0hcyxc000qf0ketv4r44ld7dlgmmu73rtlntw`
+
+---
+
 ## Requirements
 
 Python 3.4+
