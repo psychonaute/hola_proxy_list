@@ -299,6 +299,7 @@ class Output(enum.Enum):
     json = 2
     haproxy = 3
     uri = 4
+    uri_str = 5
 
     def __str__(self):
         return self.name
@@ -360,7 +361,8 @@ def vpn_countries(*, timeout=10.0):
     resp = fetch_url(CCGI_URL + "vpn_countries.json?" + qs, timeout=timeout)
     return json.loads(resp)
 
-def parse_args():
+def parse_args(args_list=None):
+
     def check_loglevel(arg):
         try:
             return LogLevel[arg]
@@ -442,7 +444,11 @@ def parse_args():
                               help="(haproxy format only) haproxy config "
                               "template file",
                               default=def_tmpl_path)
-    return parser.parse_args()
+    if args_list:
+        return parser.parse_args(args_list)
+    else:
+        return parser.parse_args()
+
 
 def output_csv(tunnels, user_uuid, auth_header=False):
     login = "user-uuid-" + user_uuid
@@ -522,8 +528,26 @@ def output_uri(tunnels, user_uuid, port='direct', tls=False):
                                     k if tls else v,
                                     proxies['port'][port]))
 
-def main():
-    args = parse_args()
+def get_uri(tunnels, user_uuid, port='direct', tls=False):
+    assert (port in PORT_TYPE_WHITELIST)
+    proxies = dict(tunnels)
+    login = "user-uuid-" + user_uuid
+    protocol = "https" if tls else "http"
+    uries = []
+    for k, v in proxies['ip_list'].items():
+        uri = "%s://%s:%s@%s:%d" % (protocol,
+                                    login,
+                                    proxies['agent_key'],
+                                    k if tls else v,
+                                    proxies['port'][port])
+        uries.append(uri)
+    return '\n'.join(uries)
+
+def main(args_list=None):
+    if args_list:
+        args = parse_args(args_list)
+    else:
+        args = parse_args()
     logger = setup_logger("MAIN", args.verbosity)
     setup_logger("FETCH", args.verbosity)
     try:
@@ -547,6 +571,8 @@ def main():
             output_json(tunnels, user_uuid)
         elif args.output_format is Output.uri:
             output_uri(tunnels, user_uuid, args.uri_port_type, args.uri_tls)
+        elif args.output_format is Output.uri_str:
+            return get_uri(tunnels, user_uuid, args.uri_port_type, args.uri_tls)
         elif args.output_format is Output.haproxy:
             output_haproxy(tunnels, user_uuid, args.template)
         else:
