@@ -274,13 +274,14 @@ ISO3166 = {
 def setup_logger(name, verbosity):
     logger = logging.getLogger(name)
     logger.setLevel(verbosity)
-    handler = logging.StreamHandler()
-    handler.setLevel(verbosity)
-    handler.setFormatter(logging.Formatter("%(asctime)s "
-                                           "%(levelname)-8s "
-                                           "%(name)s: %(message)s",
-                                           "%Y-%m-%d %H:%M:%S"))
-    logger.addHandler(handler)
+    if not logger.hasHandlers():
+        handler = logging.StreamHandler()
+        handler.setLevel(verbosity)
+        handler.setFormatter(logging.Formatter("%(asctime)s "
+                                            "%(levelname)-8s "
+                                            "%(name)s: %(message)s",
+                                            "%Y-%m-%d %H:%M:%S"))
+        logger.addHandler(handler)
     return logger
 
 class LogLevel(enum.IntEnum):
@@ -548,8 +549,9 @@ def main(args_list=None):
         args = parse_args(args_list)
     else:
         args = parse_args()
+    
     logger = setup_logger("MAIN", args.verbosity)
-    setup_logger("FETCH", args.verbosity)
+
     try:
         if args.list_countries:
             for cc in vpn_countries(timeout=args.timeout):
